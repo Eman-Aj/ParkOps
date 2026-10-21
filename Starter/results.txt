@@ -1,0 +1,50 @@
+--Java version code ran on
+Command: 
+java -version
+
+Output:
+java version "21.0.12.1" 2026-08-18 LTS
+Java(TM) SE Runtime Environment (build 21.0.12.1+1-LTS-4)
+Java HotSpot(TM) 64-Bit Server VM (build 21.0.12.1+1-LTS-4, mixed mode, sharing)
+
+
+--Displaying a structured output
+Command:
+.\run.ps1 run scripted > .\results\d1.txt 2>&1
+
+Output:
+// You recieve an output in file .\results\d1.text that contains:
+REPLAY D1 input: not a live model run; approval/execution are not invoked.
+ProposalView[proposalId=P0, bookingId=B1, targetId=B12, bookingVersion=0, policyVersion=1, status=PENDING]
+Booking: {"spaceId":"A17","requiresAccessible":true,"id":"B1","version":0,"durationHours":3}
+
+--Running D09 and null target Checks
+Command:
+.\run.ps1 check > .\results\d1-checks.txt 2>&1
+
+Output:
+// You recieve an output in file .\results\d1-checks.text that contains:
+PASS duration endpoints
+PASS invalid duration 0
+PASS invalid duration 25
+PASS invalid duration -1
+PASS invalid identifier null
+PASS invalid identifier 
+PASS invalid identifier b1
+PASS invalid identifier 1B
+PASS invalid identifier ABCDEFGHIJKLMNOPQ
+PASS valid identifiers
+PASS D1-C pending B12, no booking change
+PASS D1-D occupied D09 rejected unchanged
+PASS D1-E unknown target rejected unchanged
+PASS D1-F protected snapshot
+CHECKS 14; FAILED 0
+
+/*With the test cases all cleared by having the correct application set up
+clearly we see rejected proposals and how they remain unchanged for both D09 parking space
+and the null target parking space.*/
+
+
+
+
+    
