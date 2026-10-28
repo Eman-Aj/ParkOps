@@ -14,3 +14,9 @@ Moving forward in D2 and D3 there will be successful and populated changelogs of
 - Approval now rechecks proposal identity, booking version, policy version, and target eligibility before committing the reassignment.
 - Rejection leaves the booking unchanged. Repeated approval of a committed proposal returns `DUPLICATE` without another notification record.
 - Added terminal output for the final proposal state, booking snapshot, and notification record count.
+
+## D2.3 — Periodic task detection (2026-10-28)
+- Added a controllable `tick(seconds)` detector with an immediate first scan and 60-second scan boundaries.
+- Detects bookings assigned to closed spaces, emits at most one work item per booking/policy version, and suppresses duplicate work while a proposal is active or after a failed attempt.
+- Added an explicit operator retry hook for the current booking state and rejection of backwards clock values.
+- Added `tick-demo` to demonstrate ticks at 0, 59, and 60 seconds plus backwards-clock rejection without sleeping.

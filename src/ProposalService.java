@@ -9,6 +9,7 @@ import java.util.Set;
 public final class ProposalService {
     // Unchanging policy that is manually updated through version updates
     private static final int POLICY_VERSION = 1;
+    public static int currentPolicyVersion() { return POLICY_VERSION; }
 
     // The holder of current information
     private final Booking booking;
@@ -66,7 +67,7 @@ public final class ProposalService {
         DomainRules.requireIdentifier(proposalId);
         Proposal proposal = proposals.get(proposalId);
         if (proposal == null) throw new IllegalArgumentException("Unknown proposal: " + proposalId);
-        if (proposal.status() == Proposal.Status.COMMITTED) return "DUPLICATE";
+        if (proposal.status() == Proposal.Status.EXECUTED) return "DUPLICATE";
         if (proposal.status() != Proposal.Status.PENDING) return "NOT_PENDING:" + proposal.status();
 
         if (!approve) {
@@ -88,8 +89,15 @@ public final class ProposalService {
         // The identity check prevents execution of a detached/copied proposal object.
         if (proposals.get(proposal.proposalId()) != proposal) return "INVALID_PROPOSAL";
 
-        proposal.transition(Proposal.Status.COMMITTED);
+        proposal.transition(Proposal.Status.APPROVED);
+        // No provider call or other external action occurs between approval and execution.
+        if (proposal.bookingVersion() != booking.version() || proposal.policyVersion() != POLICY_VERSION
+                || spaces.get(proposal.targetId()) != target || !target.isAvailable()) {
+            proposal.transition(Proposal.Status.STALE);
+            return "STALE";
+        }
         booking.reassign(target.id());
+        proposal.transition(Proposal.Status.EXECUTED);
         notificationRecords.add(proposal.proposalId());
         return "COMMITTED";
     }
@@ -100,4 +108,15 @@ public final class ProposalService {
     }
 
     public synchronized int notificationCount() { return notificationRecords.size(); }
+
+    public synchronized boolean hasActiveProposal(String bookingId, int bookingVersion, int policyVersion) {
+        return proposals.values().stream().anyMatch(p -> p.bookingId().equals(bookingId)
+                && p.bookingVersion() == bookingVersion && p.policyVersion() == policyVersion
+                && (p.status() == Proposal.Status.PENDING || p.status() == Proposal.Status.APPROVED));
+    }
+
+    public synchronized boolean hasProposalForVersion(String bookingId, int bookingVersion, int policyVersion) {
+        return proposals.values().stream().anyMatch(p -> p.bookingId().equals(bookingId)
+                && p.bookingVersion() == bookingVersion && p.policyVersion() == policyVersion);
+    }
 }

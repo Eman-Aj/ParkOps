@@ -24,6 +24,21 @@ public final class Main {
             } else if(mode.equals("agent-scripted")) {
                 System.out.println("REPLAY D2 workflow; not a live model run.");
                 runSupervised(app, Fixture.replay());
+            } else if(mode.equals("tick-demo")) {
+                for (long t : List.of(0L, 59L, 60L)) {
+                    PeriodicTickResult result = app.tick(t);
+                    System.out.println(MiniJson.stringify(Map.of("timeSeconds", result.timeSeconds(),
+                            "scanned", result.scanned(), "workItems", result.workItems().stream().map(w -> Map.of(
+                                    "bookingId", w.bookingId(), "bookingVersion", w.bookingVersion(),
+                                    "policyVersion", w.policyVersion(), "closedSpaceId", w.closedSpaceId(),
+                                    "detectedAtSeconds", w.detectedAtSeconds())).toList())));
+                }
+                try {
+                    app.tick(59);
+                    throw new IllegalStateException("backwards tick unexpectedly accepted");
+                } catch (IllegalArgumentException expected) {
+                    System.out.println("BACKWARDS_CLOCK_REJECTED: " + expected.getMessage());
+                }
             } else if(mode.equals("live")) {
                 String host=System.getenv("OLLAMA_CHAT_URL"),model=System.getenv("OLLAMA_MODEL");
                 if(host==null || model==null || host.isBlank() || model.isBlank()) {
@@ -33,7 +48,7 @@ public final class Main {
                 System.out.println("LIVE provider selected; outcome must be recorded from actual execution.");
                 runSupervised(app, new OllamaProvider(URI.create(host),model,Duration.ofSeconds(30)));
             } else {
-                System.err.println("Modes: fixture | scripted (D1) | agent-scripted (D2) | live (D2)");System.exit(2);
+                System.err.println("Modes: fixture | scripted (D1) | agent-scripted (D2) | tick-demo (D2) | live (D2)");System.exit(2);
             }
         } catch(UnsupportedOperationException ex) {
             System.err.println("STARTER_NOT_IMPLEMENTED: "+ex.getMessage());System.exit(1);

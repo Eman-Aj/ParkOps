@@ -24,6 +24,7 @@ public final class StudentApplication {
             
     //Passes the fixture data to the proposal service so it knows the relvant data to use in this scenario
     private final ProposalService proposalService = new ProposalService(booking, spaces);
+    private final PeriodicTaskDetector periodicDetector = new PeriodicTaskDetector(booking, spaces, proposalService, 60);
 
     // This snapshot method is passed to the main - the mapping can then become a json
     public Map<String, Object> bookingSnapshot() { return booking.snapshot(); }
@@ -39,6 +40,10 @@ public final class StudentApplication {
     public ProposalView proposal(String proposalId) { return proposalService.proposal(proposalId); }
 
     public int notificationCount() { return proposalService.notificationCount(); }
+
+    public PeriodicTickResult tick(long nowSeconds) { return periodicDetector.tick(nowSeconds); }
+
+    public void retryPeriodic(String bookingId) { periodicDetector.retryCurrentState(bookingId); }
 
     public String run(ModelProvider provider, int limit) {
         if (provider == null) throw new IllegalArgumentException("provider required");

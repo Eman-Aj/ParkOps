@@ -9,8 +9,10 @@
 
 | 2026-10-10 | OpenAI Codex (GPT-6) | Cleanly formatted ReadMe | `README.md`| Used codex to fix my old README.md file so there is a proper flow and clear objective as to what my application should do.
 
+| 2026-10-28 | OpenAI Codex (GPT-6) | Implement the D2 four-tool model loop, operator approval and guarded execution, and controllable periodic detection; explain the acceptance requirements and run compilation/replay demonstrations. | `src/StudentApplication.java`, `src/Main.java`, `src/Booking.java`, `src/Proposal.java`, `src/ProposalService.java`, `src/PeriodicTaskDetector.java`, `src/PeriodicTickResult.java`, `src/PeriodicWorkItem.java`, `README.md`, `CHANGELOG.md`, `AI_USE.md` | I reviewed and adjusted the generated implementation in this working session. Compilation succeeded; replay rejection/approval and periodic tick demonstrations were run. No live model was used. |
+
 
 The supplied starter was my starting point into this ParkOps application, I do not claim any of the intitial domain rules and student application frameworks were of my design only. I only further implemented and specialized it to the task and my level of understanding.
 
-Other than these factors the remaining implementation was done by me. 
+I remain responsible for reviewing, understanding, and explaining all submitted code. The assistance entries above describe the portions where AI contributed.
 

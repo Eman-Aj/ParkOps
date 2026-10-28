@@ -4,7 +4,7 @@
  */
 public final class Proposal {
     public enum Status {
-        PENDING, REJECTED, STALE, COMMITTED
+        PENDING, APPROVED, REJECTED, STALE, EXECUTED
     }
 
     private final String proposalId;
@@ -70,8 +70,9 @@ public final class Proposal {
     }
 
     void transition(Status next) {
-        if (status != Status.PENDING) throw new IllegalStateException("Only a pending proposal can change state");
-        if (next == null || next == Status.PENDING) throw new IllegalArgumentException("A terminal proposal state is required");
+        boolean allowed = (status == Status.PENDING && (next == Status.APPROVED || next == Status.REJECTED || next == Status.STALE))
+                || (status == Status.APPROVED && (next == Status.EXECUTED || next == Status.STALE));
+        if (!allowed) throw new IllegalStateException("Invalid proposal state transition: " + status + " -> " + next);
         status = next;
     }
 }

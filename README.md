@@ -56,6 +56,10 @@ Compilation alone can be checked with:
 
 ## Current scope
 
-The D1 path initializes the synthetic booking and spaces in `StudentApplication`; it currently does not load `data/scenario.json`. The scripted D1 command always requests B12. `D09` and unknown-target rejection are covered by the supplied `check` cases. D2 operations such as the model/tool workflow, operator approval, execution, and periodic ticks are not part of the working D1 example yet.
+The application initializes the synthetic booking and spaces in `StudentApplication`; it currently does not load `data/scenario.json`. The D1 scripted command requests B12. `D09` and unknown-target rejection are covered by the supplied `check` cases.
+
+## Periodic detection demonstration
+
+Run `.\run.ps1 run tick-demo` to advance the detector through explicit times 0, 59 and 60 seconds and then demonstrate rejection of a backwards clock. There is no background scheduler or real-time wait. The first tick scans immediately; later ticks scan at the next 60-second boundary. A booking/policy version pair produces at most one automatic work item and an active proposal suppresses another. After a failed attempt, call `retryPeriodic("B1")` explicitly to allow one new work item for the current state; a changed booking or policy version is a distinct state and can be detected independently.
 
 All scenario data is synthetic. Follow the matching course brief for milestone requirements, diagrams, evidence, and submission instructions. Record actual test output in `results/`; do not report a check as passing unless it was run.
