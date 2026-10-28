@@ -1,6 +1,9 @@
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /** D1 proposal creation and baseline eligibility checks. */
 public final class ProposalService {
@@ -13,6 +16,8 @@ public final class ProposalService {
 
     // This allows us to have a fresh id to increment
     private int nextId = 0; // INcrementing change in id of spaces
+    private final Map<String, Proposal> proposals = new HashMap<>();
+    private final Set<String> notificationRecords = new HashSet<>();
 
     // Initializing the main businesses information - setting all the final values
     public ProposalService(Booking booking, List<ParkingSpace> parkingSpaces) {
@@ -33,7 +38,7 @@ public final class ProposalService {
     }
 
     // Where requests will be handled
-    public Proposal propose(String targetId) {
+    public synchronized Proposal propose(String targetId) {
         DomainRules.requireIdentifier(targetId);
         ParkingSpace target = spaces.get(targetId);
 
@@ -51,6 +56,48 @@ public final class ProposalService {
         String id = "P" + nextId++;
 
         //Sends a new proposal object to back to the 
-        return new Proposal(id, booking.id(), target.id(), booking.version(), POLICY_VERSION, Proposal.Status.PENDING);
+        Proposal proposal = new Proposal(id, booking.id(), target.id(), booking.version(), POLICY_VERSION, Proposal.Status.PENDING);
+        proposals.put(id, proposal);
+        return proposal;
     }
+
+    /** A separate operator decision. Approval performs the guarded commit atomically. */
+    public synchronized String decide(String proposalId, boolean approve) {
+        DomainRules.requireIdentifier(proposalId);
+        Proposal proposal = proposals.get(proposalId);
+        if (proposal == null) throw new IllegalArgumentException("Unknown proposal: " + proposalId);
+        if (proposal.status() == Proposal.Status.COMMITTED) return "DUPLICATE";
+        if (proposal.status() != Proposal.Status.PENDING) return "NOT_PENDING:" + proposal.status();
+
+        if (!approve) {
+            proposal.transition(Proposal.Status.REJECTED);
+            return "REJECTED";
+        }
+
+        // Recheck all mutable/current facts immediately before changing domain state.
+        if (!proposal.bookingId().equals(booking.id()) || proposal.bookingVersion() != booking.version()
+                || proposal.policyVersion() != POLICY_VERSION) {
+            proposal.transition(Proposal.Status.STALE);
+            return "STALE";
+        }
+        ParkingSpace target = spaces.get(proposal.targetId());
+        if (target == null || !target.isAvailable() || target.id().equals(booking.spaceId())) {
+            proposal.transition(Proposal.Status.STALE);
+            return "STALE_TARGET";
+        }
+        // The identity check prevents execution of a detached/copied proposal object.
+        if (proposals.get(proposal.proposalId()) != proposal) return "INVALID_PROPOSAL";
+
+        proposal.transition(Proposal.Status.COMMITTED);
+        booking.reassign(target.id());
+        notificationRecords.add(proposal.proposalId());
+        return "COMMITTED";
+    }
+
+    public synchronized ProposalView proposal(String proposalId) {
+        Proposal proposal = proposals.get(proposalId);
+        return proposal == null ? null : proposal.view();
+    }
+
+    public synchronized int notificationCount() { return notificationRecords.size(); }
 }

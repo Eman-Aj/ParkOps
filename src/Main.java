@@ -1,6 +1,8 @@
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 public final class Main {
     public static void main(String[] args) throws Exception {
         String mode=args.length==0?"fixture":args[0];
@@ -21,7 +23,7 @@ public final class Main {
                 System.out.println("Booking: "+MiniJson.stringify(app.bookingSnapshot()));
             } else if(mode.equals("agent-scripted")) {
                 System.out.println("REPLAY D2 workflow; not a live model run.");
-                System.out.println(app.run(Fixture.replay(),6));
+                runSupervised(app, Fixture.replay());
             } else if(mode.equals("live")) {
                 String host=System.getenv("OLLAMA_CHAT_URL"),model=System.getenv("OLLAMA_MODEL");
                 if(host==null || model==null || host.isBlank() || model.isBlank()) {
@@ -29,12 +31,40 @@ public final class Main {
                     System.exit(2);
                 }
                 System.out.println("LIVE provider selected; outcome must be recorded from actual execution.");
-                System.out.println(app.run(new OllamaProvider(URI.create(host),model,Duration.ofSeconds(30)),6));
+                runSupervised(app, new OllamaProvider(URI.create(host),model,Duration.ofSeconds(30)));
             } else {
                 System.err.println("Modes: fixture | scripted (D1) | agent-scripted (D2) | live (D2)");System.exit(2);
             }
         } catch(UnsupportedOperationException ex) {
             System.err.println("STARTER_NOT_IMPLEMENTED: "+ex.getMessage());System.exit(1);
+        }
+    }
+
+    private static void runSupervised(StudentApplication app, ModelProvider provider) {
+        String output = app.run(provider, 6);
+        System.out.println(output);
+        Map<String, Object> run = MiniJson.object(MiniJson.parse(output));
+        if (!"PENDING_APPROVAL".equals(run.get("status"))) return;
+        Map<String, Object> proposal = MiniJson.object(run.get("result"));
+        String proposalId = (String) proposal.get("proposalId");
+        Scanner input = new Scanner(System.in);
+        while (true) {
+            System.out.print("Operator decision for " + proposalId + " [y/n]: ");
+            if (!input.hasNextLine()) {
+                System.out.println("No operator decision received; proposal remains PENDING.");
+                return;
+            }
+            String answer = input.nextLine().trim();
+            if (answer.equalsIgnoreCase("y") || answer.equalsIgnoreCase("n")) {
+                boolean approve = answer.equalsIgnoreCase("y");
+                String result = app.operatorDecision(proposalId, approve);
+                System.out.println("Operator outcome: " + result);
+                System.out.println("Proposal: " + app.proposal(proposalId));
+                System.out.println("Booking: " + MiniJson.stringify(app.bookingSnapshot()));
+                System.out.println("Notification records: " + app.notificationCount());
+                return;
+            }
+            System.out.println("Enter y or n.");
         }
     }
 }

@@ -32,6 +32,14 @@ public final class StudentApplication {
         return proposalService.propose(targetId).view();
     }
 
+    public String operatorDecision(String proposalId, boolean approve) {
+        return proposalService.decide(proposalId, approve);
+    }
+
+    public ProposalView proposal(String proposalId) { return proposalService.proposal(proposalId); }
+
+    public int notificationCount() { return proposalService.notificationCount(); }
+
     public String run(ModelProvider provider, int limit) {
         if (provider == null) throw new IllegalArgumentException("provider required");
         if (limit < 1 || limit > 6) throw new IllegalArgumentException("call limit must be between 1 and 6");

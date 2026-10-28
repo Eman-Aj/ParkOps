@@ -4,9 +4,9 @@ import java.util.Map;
 public final class Booking {
     //Base input fields for the domain
     private final String id;
-    private final String spaceId;
+    private String spaceId;
     private final int durationHours;
-    private final int version;
+    private int version;
     private final boolean requiresAccessible;
 
     public Booking(String id, String spaceId, int durationHours, int version, boolean requiresAccessible) {
@@ -34,5 +34,13 @@ public final class Booking {
     public Map<String, Object> snapshot() {
         return Map.of("id", id, "spaceId", spaceId, "durationHours", durationHours,
                 "version", version, "requiresAccessible", requiresAccessible);
+    }
+
+    /** Commit a reassignment after application-level approval checks have passed. */
+    void reassign(String newSpaceId) {
+        DomainRules.requireIdentifier(newSpaceId);
+        if (newSpaceId.equals(spaceId)) throw new IllegalArgumentException("Booking is already assigned to that space");
+        spaceId = newSpaceId;
+        version++;
     }
 }

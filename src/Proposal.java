@@ -4,7 +4,7 @@
  */
 public final class Proposal {
     public enum Status {
-        PENDING
+        PENDING, REJECTED, STALE, COMMITTED
     }
 
     private final String proposalId;
@@ -12,7 +12,7 @@ public final class Proposal {
     private final String targetId;
     private final int bookingVersion;
     private final int policyVersion;
-    private final Status status;
+    private Status status;
 
     public Proposal(String proposalId,
             String bookingId,
@@ -67,5 +67,11 @@ public final class Proposal {
     //Makes a new proposal view object 
     public ProposalView view() {
         return new ProposalView(proposalId, bookingId, targetId, bookingVersion, policyVersion, status.name());
+    }
+
+    void transition(Status next) {
+        if (status != Status.PENDING) throw new IllegalStateException("Only a pending proposal can change state");
+        if (next == null || next == Status.PENDING) throw new IllegalArgumentException("A terminal proposal state is required");
+        status = next;
     }
 }
