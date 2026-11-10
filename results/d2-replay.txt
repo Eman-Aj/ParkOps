@@ -1,0 +1,8 @@
+Date: 2026-11-10 (Toronto)
+Command: .\run.ps1 run agent-scripted
+Environment: Java 21; ReplayProvider fixture; no live model
+Output:
+REPLAY D2 workflow; not a live model run.
+{"invalidOutputs":0,"status":"PENDING_APPROVAL","result":{"proposalId":"P0","bookingId":"B1","policyVersion":1,"bookingVersion":0,"targetId":"B12","status":"PENDING"},"modelCalls":3}
+Operator decision for P0 [y/n]: No operator decision received; proposal remains PENDING.
+Exit code: 0

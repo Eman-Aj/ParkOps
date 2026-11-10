@@ -18,6 +18,7 @@ public final class ProposalService {
     // This allows us to have a fresh id to increment
     private int nextId = 0; // INcrementing change in id of spaces
     private final Map<String, Proposal> proposals = new HashMap<>();
+    private final Set<String> commitRecords = new HashSet<>();
     private final Set<String> notificationRecords = new HashSet<>();
 
     // Initializing the main businesses information - setting all the final values
@@ -62,20 +63,35 @@ public final class ProposalService {
         return proposal;
     }
 
-    /** A separate operator decision. Approval performs the guarded commit atomically. */
-    public synchronized String decide(String proposalId, boolean approve) {
+    /** Operator approval records authority but never changes the booking. */
+    public synchronized String approve(String proposalId) {
         DomainRules.requireIdentifier(proposalId);
         Proposal proposal = proposals.get(proposalId);
         if (proposal == null) throw new IllegalArgumentException("Unknown proposal: " + proposalId);
         if (proposal.status() == Proposal.Status.EXECUTED) return "DUPLICATE";
         if (proposal.status() != Proposal.Status.PENDING) return "NOT_PENDING:" + proposal.status();
+        proposal.transition(Proposal.Status.APPROVED);
+        return "APPROVED";
+    }
 
-        if (!approve) {
-            proposal.transition(Proposal.Status.REJECTED);
-            return "REJECTED";
-        }
+    public synchronized String reject(String proposalId) {
+        DomainRules.requireIdentifier(proposalId);
+        Proposal proposal = proposals.get(proposalId);
+        if (proposal == null) throw new IllegalArgumentException("Unknown proposal: " + proposalId);
+        if (proposal.status() != Proposal.Status.PENDING) return "NOT_PENDING:" + proposal.status();
+        proposal.transition(Proposal.Status.REJECTED);
+        return "REJECTED";
+    }
 
-        // Recheck all mutable/current facts immediately before changing domain state.
+    /** Execute only an approved proposal, rechecking current facts directly before mutation. */
+    public synchronized String execute(String proposalId) {
+        DomainRules.requireIdentifier(proposalId);
+        Proposal proposal = proposals.get(proposalId);
+        if (proposal == null) throw new IllegalArgumentException("Unknown proposal: " + proposalId);
+        if (proposal.status() == Proposal.Status.EXECUTED) return "DUPLICATE";
+        if (proposal.status() != Proposal.Status.APPROVED) return "NOT_APPROVED";
+
+        if (proposals.get(proposal.proposalId()) != proposal) return "INVALID_PROPOSAL";
         if (!proposal.bookingId().equals(booking.id()) || proposal.bookingVersion() != booking.version()
                 || proposal.policyVersion() != POLICY_VERSION) {
             proposal.transition(Proposal.Status.STALE);
@@ -84,22 +100,28 @@ public final class ProposalService {
         ParkingSpace target = spaces.get(proposal.targetId());
         if (target == null || !target.isAvailable() || target.id().equals(booking.spaceId())) {
             proposal.transition(Proposal.Status.STALE);
-            return "STALE_TARGET";
+            return "UNAVAILABLE_OR_INELIGIBLE";
         }
-        // The identity check prevents execution of a detached/copied proposal object.
-        if (proposals.get(proposal.proposalId()) != proposal) return "INVALID_PROPOSAL";
 
-        proposal.transition(Proposal.Status.APPROVED);
-        // No provider call or other external action occurs between approval and execution.
-        if (proposal.bookingVersion() != booking.version() || proposal.policyVersion() != POLICY_VERSION
-                || spaces.get(proposal.targetId()) != target || !target.isAvailable()) {
+        // The synchronized method contains validation and mutation with no model/external call between them.
+        ParkingSpace oldSpace = spaces.get(booking.spaceId());
+        if (oldSpace == null) {
             proposal.transition(Proposal.Status.STALE);
             return "STALE";
         }
+        oldSpace.updateOperationalState(oldSpace.isOpen(), false);
+        target.updateOperationalState(target.isOpen(), true);
         booking.reassign(target.id());
         proposal.transition(Proposal.Status.EXECUTED);
+        commitRecords.add(proposal.proposalId());
         notificationRecords.add(proposal.proposalId());
         return "COMMITTED";
+    }
+
+    public synchronized void updateSpaceOperationalState(String spaceId, boolean isOpen, boolean isOccupied) {
+        ParkingSpace space = spaces.get(spaceId);
+        if (space == null) throw new IllegalArgumentException("Unknown parking space: " + spaceId);
+        space.updateOperationalState(isOpen, isOccupied);
     }
 
     public synchronized ProposalView proposal(String proposalId) {
@@ -108,6 +130,7 @@ public final class ProposalService {
     }
 
     public synchronized int notificationCount() { return notificationRecords.size(); }
+    public synchronized int commitCount() { return commitRecords.size(); }
 
     public synchronized boolean hasActiveProposal(String bookingId, int bookingVersion, int policyVersion) {
         return proposals.values().stream().anyMatch(p -> p.bookingId().equals(bookingId)

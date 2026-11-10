@@ -1,0 +1,7 @@
+Date: 2026-11-10 (Toronto)
+Command: .\run.ps1 run live
+Environment: no OLLAMA_CHAT_URL or OLLAMA_MODEL configured in this workspace
+Output:
+LIVE_RUN_PENDING_COURSE_ACCESS: configure the course-provided OLLAMA_CHAT_URL and OLLAMA_MODEL.
+Exit code: 2
+Status: LIVE_RUN_PENDING_COURSE_ACCESS. No real model transcript was generated; follow the course access contingency. No paid access was purchased.

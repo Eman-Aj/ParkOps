@@ -1,0 +1,9 @@
+Date: 2026-11-10 (Toronto)
+Command: .\run.ps1 run tick-demo
+Environment: Java 21; synthetic scenario; controllable time; no sleep
+Output:
+{"scanned":true,"workItems":[{"closedSpaceId":"A17","detectedAtSeconds":0,"policyVersion":1,"bookingVersion":0,"bookingId":"B1"}],"timeSeconds":0}
+{"scanned":false,"workItems":[],"timeSeconds":59}
+{"scanned":true,"workItems":[],"timeSeconds":60}
+BACKWARDS_CLOCK_REJECTED: clock moved backwards
+Exit code: 0

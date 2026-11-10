@@ -3,8 +3,8 @@ import java.util.Map;
 /** A parking space and its availability state. */
 public final class ParkingSpace {
     private final String id;
-    private final boolean open;
-    private final boolean occupied;
+    private boolean open;
+    private boolean occupied;
     private final boolean accessible;
 
     public ParkingSpace(String id, boolean open, boolean occupied, boolean accessible) {
@@ -20,6 +20,12 @@ public final class ParkingSpace {
     public boolean isOccupied() { return occupied; }
     public boolean isAccessible() { return accessible; }
     public boolean isAvailable() { return open && !occupied; }
+
+    /** Controlled operational-state update; ProposalService is the mutation boundary. */
+    void updateOperationalState(boolean isOpen, boolean isOccupied) {
+        open = isOpen;
+        occupied = isOccupied;
+    }
 
     // This snapshot method is passed from the student application to the main - the mapping can then become a json
     public Map<String, Object> snapshot() {

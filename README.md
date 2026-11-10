@@ -62,4 +62,12 @@ The application initializes the synthetic booking and spaces in `StudentApplicat
 
 Run `.\run.ps1 run tick-demo` to advance the detector through explicit times 0, 59 and 60 seconds and then demonstrate rejection of a backwards clock. There is no background scheduler or real-time wait. The first tick scans immediately; later ticks scan at the next 60-second boundary. A booking/policy version pair produces at most one automatic work item and an active proposal suppresses another. After a failed attempt, call `retryPeriodic("B1")` explicitly to allow one new work item for the current state; a changed booking or policy version is a distinct state and can be detected independently.
 
+## D2 supervised-agent demonstration
+
+Run `.\run.ps1 run agent-scripted` for the deterministic replay. The model test double reads the booking, lists spaces, and creates a pending proposal; the terminal then asks the operator for `y` or `n`. A `y` approves and executes through separate Java operations; an `n` rejects without changing the booking. This is a replay, not a live model transcript.
+
+Run `.\run.ps1 run live` only with the course-provided `OLLAMA_CHAT_URL` (ending in `/api/chat`) and `OLLAMA_MODEL` configured. The live path uses the same operator prompt and does not commit without the operator decision. If course access has not been supplied, retain the `LIVE_RUN_PENDING_COURSE_ACCESS` result and do not buy access as a workaround.
+
+Run `.\run.ps1 test` for the JUnit suite, including D1 regressions, D2 deterministic acceptance cases, and the local fake-HTTP provider contract checks. Captured D2 outputs are in `results/d2-replay.txt`, `results/d2-checks.txt`, `results/d2-junit.txt`, `results/d2-periodic.txt`, and `results/d2-model-status.txt`.
+
 All scenario data is synthetic. Follow the matching course brief for milestone requirements, diagrams, evidence, and submission instructions. Record actual test output in `results/`; do not report a check as passing unless it was run.

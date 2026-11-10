@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1780" viewBox="0 0 1500 1780" role="img" aria-labelledby="title desc">
+  <title id="title">ParkOps D2 sequence diagrams</title>
+  <desc id="desc">The supervised model, proposal, and operator flow, followed by periodic detection with explicit ticks.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#334155"/></marker>
+    <marker id="returnArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#64748b"/></marker>
+    <style>
+      text{font-family:Segoe UI,Arial,sans-serif;fill:#172033} .title{font-size:29px;font-weight:700}.subtitle{font-size:15px;fill:#526078}
+      .head{fill:#eef3fb;stroke:#4b6284;stroke-width:1.5}.headtxt{font-size:15px;font-weight:600;text-anchor:middle}
+      .life{stroke:#a8b3c4;stroke-width:1.4;stroke-dasharray:6 6}.msg{stroke:#334155;stroke-width:1.7;marker-end:url(#arrow)}
+      .ret{stroke:#64748b;stroke-width:1.5;stroke-dasharray:6 5;marker-end:url(#returnArrow)} .label{font-size:14px;fill:#26364d}
+      .frame{fill:#f8fafc;stroke:#8090a8;stroke-width:1.3}.frametab{fill:#e8edf5;stroke:#8090a8;stroke-width:1.2}
+      .frametxt{font-size:13px;font-weight:700;fill:#43536b}.note{fill:#fff8df;stroke:#d4aa45;stroke-width:1.2}.notetxt{font-size:13px;fill:#5d4a1c}
+      .panel{fill:#ffffff;stroke:#d5dce7;stroke-width:1.2}.paneltitle{font-size:19px;font-weight:700;fill:#1d3557}
+      .small{font-size:12px;fill:#526078}.divider{stroke:#d7deea;stroke-width:1.2}
+    </style>
+  </defs>
+  <rect width="1500" height="1780" fill="#f4f7fb"/>
+  <text x="54" y="48" class="title">ParkOps D2 — Sequence</text>
+  <text x="54" y="75" class="subtitle">Supervised model flow, operator decision, guarded execution, and periodic detection</text>
+
+  <rect x="28" y="96" width="1444" height="1090" rx="14" class="panel"/>
+  <text x="54" y="128" class="paneltitle">1. Agent proposal and operator decision</text>
+
+  <!-- participant headers and lifelines -->
+  <g>
+    <rect x="40" y="145" width="130" height="48" rx="7" class="head"/><text x="105" y="174" class="headtxt">Operator</text>
+    <rect x="220" y="145" width="150" height="48" rx="7" class="head"/><text x="295" y="174" class="headtxt">Main</text>
+    <rect x="425" y="145" width="190" height="48" rx="7" class="head"/><text x="520" y="165" class="headtxt">Student</text><text x="520" y="183" class="headtxt">Application</text>
+    <rect x="670" y="145" width="170" height="48" rx="7" class="head"/><text x="755" y="165" class="headtxt">ModelProvider</text><text x="755" y="183" class="small" text-anchor="middle">Replay or Ollama</text>
+    <rect x="890" y="145" width="170" height="48" rx="7" class="head"/><text x="975" y="165" class="headtxt">Proposal</text><text x="975" y="183" class="headtxt">Service</text>
+    <rect x="1100" y="145" width="180" height="48" rx="7" class="head"/><text x="1190" y="165" class="headtxt">Booking /</text><text x="1190" y="183" class="headtxt">ParkingSpace</text>
+    <rect x="1320" y="145" width="140" height="48" rx="7" class="head"/><text x="1390" y="174" class="headtxt">Proposal</text>
+    <path d="M105 193 V1165 M295 193 V1165 M520 193 V1165 M755 193 V1165 M975 193 V1165 M1190 193 V1165 M1390 193 V1165" class="life"/>
+  </g>
+
+  <!-- agent loop frame -->
+  <rect x="400" y="205" width="1050" height="550" rx="5" class="frame"/>
+  <path d="M400 205 H520 V229 H400 Z" class="frametab"/><text x="410" y="222" class="frametxt">loop</text>
+  <text x="455" y="223" class="small">Calls continue with observations, up to six; proposal or FINISH ends the loop</text>
+  <line x1="295" y1="247" x2="520" y2="247" class="msg"/><text x="330" y="240" class="label">run(provider, 6)</text>
+  <line x1="520" y1="282" x2="755" y2="282" class="msg"/><text x="555" y="275" class="label">next(history)</text>
+  <line x1="755" y1="317" x2="520" y2="317" class="ret"/><text x="565" y="310" class="label">JSON tool request</text>
+  <path d="M520 337 h85 v36 h-85" fill="none" stroke="#526078" stroke-width="1.4" marker-end="url(#arrow)"/><text x="530" y="359" class="small">Validate fields, tool, goal, order</text>
+  <rect x="535" y="385" width="300" height="53" rx="6" class="note"/><text x="550" y="407" class="notetxt">Invalid output: count it and append</text><text x="550" y="426" class="notetxt">an error observation, then continue</text>
+  <line x1="520" y1="462" x2="1190" y2="462" class="msg"/><text x="805" y="454" class="label">READ_BOOKING → snapshot and version</text>
+  <line x1="1190" y1="486" x2="520" y2="486" class="ret"/><text x="825" y="480" class="small">Booking observation</text>
+  <line x1="520" y1="518" x2="1190" y2="518" class="msg"/><text x="800" y="511" class="label">LIST_ALTERNATIVES → current spaces</text>
+  <line x1="1190" y1="542" x2="520" y2="542" class="ret"/><text x="825" y="536" class="small">Alternatives observation</text>
+  <rect x="655" y="557" width="340" height="34" rx="5" class="note"/><text x="668" y="579" class="notetxt">Alternative terminal tool: FINISH → FINISHED</text>
+
+  <!-- proposal creation -->
+  <line x1="520" y1="615" x2="975" y2="615" class="msg"/><text x="650" y="607" class="label">PROPOSE_REASSIGNMENT(targetId)</text>
+  <line x1="975" y1="648" x2="1190" y2="648" class="msg"/><text x="1000" y="640" class="small">Check target, capture versions</text>
+  <line x1="975" y1="680" x2="1390" y2="680" class="msg"/><text x="1085" y="672" class="label">Create PENDING</text>
+  <line x1="1390" y1="704" x2="975" y2="704" class="ret"/><text x="1100" y="698" class="small">Proposal</text>
+  <line x1="975" y1="730" x2="520" y2="730" class="ret"/><text x="690" y="723" class="label">ProposalView</text>
+  <line x1="520" y1="758" x2="295" y2="758" class="ret"/><text x="315" y="751" class="label">PENDING_APPROVAL; stop model loop</text>
+  <line x1="295" y1="790" x2="105" y2="790" class="msg"/><text x="125" y="783" class="label">Show proposal; ask y/n</text>
+  <line x1="105" y1="822" x2="295" y2="822" class="msg"/><text x="140" y="815" class="label">Operator decision</text>
+  <line x1="295" y1="854" x2="520" y2="854" class="msg"/><text x="310" y="847" class="label">operatorDecision(id, yes/no)</text>
+  <line x1="520" y1="886" x2="975" y2="886" class="msg"/><text x="610" y="879" class="label">operatorDecision: reject or approve; execute on yes</text>
+
+  <!-- outcome alternatives -->
+  <rect x="870" y="905" width="580" height="248" rx="5" class="frame"/>
+  <path d="M870 905 H1000 V929 H870 Z" class="frametab"/><text x="880" y="922" class="frametxt">alt</text>
+  <text x="1010" y="922" class="small">Operator rejects / operator approves</text>
+  <line x1="870" y1="966" x2="1450" y2="966" class="divider" stroke-dasharray="6 5"/>
+  <text x="885" y="951" class="frametxt">[no]</text>
+  <line x1="975" y1="947" x2="1390" y2="947" class="msg"/><text x="1050" y="940" class="label">REJECTED; booking and spaces unchanged</text>
+  <text x="885" y="994" class="frametxt">[yes]</text>
+  <line x1="975" y1="991" x2="1390" y2="991" class="msg"/><text x="1080" y="984" class="label">Transition to APPROVED; booking unchanged</text>
+  <path d="M975 1003 h82 v27 h-82" fill="none" stroke="#526078" stroke-width="1.4" marker-end="url(#arrow)"/><text x="1065" y="1022" class="small">execute(): recheck identity, versions, target</text>
+  <line x1="870" y1="1037" x2="1450" y2="1037" class="divider" stroke-dasharray="6 5"/>
+  <text x="885" y="1058" class="frametxt">[checks fail]</text>
+  <line x1="975" y1="1054" x2="1390" y2="1054" class="msg"/><text x="1105" y="1047" class="label">STALE; no booking or occupancy change</text>
+  <text x="885" y="1090" class="frametxt">[checks pass]</text>
+  <line x1="975" y1="1082" x2="1190" y2="1082" class="msg"/><text x="990" y="1075" class="small">Move booking; release old space, occupy target; version++</text>
+  <line x1="975" y1="1112" x2="1390" y2="1112" class="msg"/><text x="1040" y="1105" class="small">EXECUTED; record one commit and notification</text>
+  <line x1="975" y1="1140" x2="520" y2="1140" class="ret"/><text x="700" y="1133" class="small">COMMITTED</text>
+  <text x="54" y="1170" class="small">A repeat request for an EXECUTED proposal returns DUPLICATE without another booking update or notification.</text>
+
+  <!-- periodic tick sub-sequence -->
+  <rect x="28" y="1205" width="1444" height="545" rx="14" class="panel"/>
+  <text x="54" y="1237" class="paneltitle">2. Periodic detection — explicit time, no sleep</text>
+  <rect x="95" y="1255" width="190" height="42" rx="7" class="head"/><text x="190" y="1282" class="headtxt">Main / caller</text>
+  <rect x="410" y="1255" width="190" height="42" rx="7" class="head"/><text x="505" y="1282" class="headtxt">StudentApplication</text>
+  <rect x="735" y="1255" width="210" height="42" rx="7" class="head"/><text x="840" y="1282" class="headtxt">PeriodicTaskDetector</text>
+  <rect x="1080" y="1255" width="290" height="42" rx="7" class="head"/><text x="1225" y="1282" class="headtxt">Booking / ProposalService</text>
+  <path d="M190 1297 V1725 M505 1297 V1725 M840 1297 V1725 M1225 1297 V1725" class="life"/>
+  <line x1="190" y1="1325" x2="505" y2="1325" class="msg"/><text x="300" y="1318" class="label">tick(0)</text>
+  <line x1="505" y1="1350" x2="840" y2="1350" class="msg"/><text x="615" y="1343" class="label">tick(0)</text>
+  <line x1="840" y1="1375" x2="1225" y2="1375" class="msg"/><text x="920" y="1368" class="small">Read closed space, versions, active proposal</text>
+  <line x1="840" y1="1400" x2="505" y2="1400" class="ret"/><text x="585" y="1393" class="small">One work item for B1/version 0/policy 1</text>
+  <line x1="190" y1="1425" x2="505" y2="1425" class="msg"/><text x="300" y="1418" class="label">tick(59)</text>
+  <line x1="505" y1="1450" x2="840" y2="1450" class="msg"/><text x="615" y="1443" class="label">tick(59)</text>
+  <line x1="840" y1="1475" x2="505" y2="1475" class="ret"/><text x="615" y="1468" class="small">Before boundary: no scan</text>
+  <line x1="190" y1="1510" x2="505" y2="1510" class="msg"/><text x="300" y="1503" class="label">tick(60)</text>
+  <line x1="505" y1="1535" x2="840" y2="1535" class="msg"/><text x="615" y="1528" class="label">tick(60)</text>
+  <line x1="840" y1="1560" x2="1225" y2="1560" class="msg"/><text x="920" y="1553" class="small">Scan boundary; check same-version suppression</text>
+  <line x1="840" y1="1585" x2="505" y2="1585" class="ret"/><text x="585" y="1578" class="small">No duplicate work item for this state</text>
+  <line x1="190" y1="1620" x2="505" y2="1620" class="msg"/><text x="292" y="1613" class="label">tick(59) after 60</text>
+  <line x1="505" y1="1645" x2="840" y2="1645" class="msg"/><text x="595" y="1638" class="label">tick(59)</text>
+  <line x1="840" y1="1670" x2="505" y2="1670" class="ret"/><text x="605" y="1663" class="small">Reject: clock moved backwards</text>
+  <text x="54" y="1722" class="small">Failed work is retried only by an explicit operator retry or after a relevant version change.</text>
+</svg>

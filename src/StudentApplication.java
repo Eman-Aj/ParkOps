@@ -29,17 +29,36 @@ public final class StudentApplication {
     // This snapshot method is passed to the main - the mapping can then become a json
     public Map<String, Object> bookingSnapshot() { return booking.snapshot(); }
 
+    public List<Map<String, Object>> spacesSnapshot() {
+        return spaces.stream().map(ParkingSpace::snapshot).toList();
+    }
+
     public ProposalView propose(String targetId) {
         return proposalService.propose(targetId).view();
     }
 
     public String operatorDecision(String proposalId, boolean approve) {
-        return proposalService.decide(proposalId, approve);
+        if (!approve) return proposalService.reject(proposalId);
+        String approval = proposalService.approve(proposalId);
+        if (!approval.equals("APPROVED")) return approval;
+        return proposalService.execute(proposalId);
     }
+
+    public String approveProposal(String proposalId) { return proposalService.approve(proposalId); }
+
+    public String rejectProposal(String proposalId) { return proposalService.reject(proposalId); }
+
+    public String executeProposal(String proposalId) { return proposalService.execute(proposalId); }
 
     public ProposalView proposal(String proposalId) { return proposalService.proposal(proposalId); }
 
     public int notificationCount() { return proposalService.notificationCount(); }
+
+    public int commitCount() { return proposalService.commitCount(); }
+
+    public void updateSpaceOperationalState(String spaceId, boolean open, boolean occupied) {
+        proposalService.updateSpaceOperationalState(spaceId, open, occupied);
+    }
 
     public PeriodicTickResult tick(long nowSeconds) { return periodicDetector.tick(nowSeconds); }
 
@@ -62,11 +81,10 @@ public final class StudentApplication {
             try {
                 raw = provider.next(List.copyOf(history));
             } catch (HttpTimeoutException ex) {
-                return outcome("TIMEOUT", call, invalidOutputs, "Model request timed out");
+                return outcome("PROVIDER_ERROR", call, invalidOutputs, "Model request timed out");
             } catch (Exception ex) {
                 String message = ex.getMessage() == null ? "Model request failed" : ex.getMessage();
-                String kind = message.toLowerCase().contains("exhaust") ? "ATTEMPTS_EXHAUSTED" : "MODEL_ERROR";
-                return outcome(kind, call, invalidOutputs, message);
+                return outcome("PROVIDER_ERROR", call, invalidOutputs, message);
             }
 
             history.add(new ChatMessage("assistant", raw == null ? "" : raw));
@@ -133,7 +151,7 @@ public final class StudentApplication {
                 history.add(new ChatMessage("user", observation("INVALID_REQUEST", ex.getMessage())));
             }
         }
-        return outcome(lastFailure.isEmpty() ? "ATTEMPTS_EXHAUSTED" : "ATTEMPTS_EXHAUSTED", limit,
+        return outcome("STEP_LIMIT", limit,
                 invalidOutputs, lastFailure.isEmpty() ? "No terminal action before call limit" : lastFailure);
     }
 
